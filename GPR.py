@@ -551,7 +551,7 @@ print(m.kern.lengthscale)
 
 
 #DST_50SOC NEDC_50SOC
-df_test=UDDS_50SOC
+df_test=NEDC_50SOC
 V_test=df_test[['V']]
 I_test=df_test[['I']]
 
