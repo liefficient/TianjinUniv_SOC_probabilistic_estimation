@@ -548,17 +548,6 @@ NEDC_50SOC=np.load('NEDC_50SOC_zizhi.npy')
 NEDC_50SOC=pd.DataFrame(NEDC_50SOC)
 NEDC_50SOC.columns=['V','I','SOC']
 
-# number 27304
-US06_50SOC=np.load('US06_50SOC_zizhi.npy')
-US06_50SOC=pd.DataFrame(US06_50SOC)
-US06_50SOC.columns=['V','I','SOC']
-
-# number 34106
-UDDS_50SOC=np.load('UDDS_50SOC_zizhi.npy')
-UDDS_50SOC=pd.DataFrame(UDDS_50SOC)
-UDDS_50SOC.columns=['V','I','SOC']
-
-
 df_train=FUDS_50SOC
 
 Vk=df_train[['V']]
@@ -594,7 +583,7 @@ ngb = NGBRegressor(
                    n_estimators=1500)
 ngb.fit(df_train_X.values,df_train_Y.values[1:].ravel())
 
-#DST_50SOC NEDC_50SOC US06_50SOC UDDS_50SOC
+#DST_50SOC NEDC_50SOC
 df_test=NEDC_50SOC
 V_test=df_test[['V']]
 I_test=df_test[['I']]
