@@ -547,7 +547,7 @@ m.optimize_restarts(num_restarts = 15)
 print(m)
 
 print(m.kern.variance)
-print(m.kern.lengthscale)hkjhkhjkhjkkghkhjkkhj
+print(m.kern.lengthscale)
 
 
 #DST_50SOC NEDC_50SOC
