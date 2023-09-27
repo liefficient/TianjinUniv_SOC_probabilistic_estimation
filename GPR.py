@@ -586,3 +586,115 @@ CRPS = C.mean()
 print(PICP)
 print(PINAW)
 print(CRPS)
+
+
+
+#****************************************Self-made experimental dataset2,Training:NEDC_50SOC,Testing:DST_50SOC、FUDS_50SOC****************************************
+
+
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+import seaborn as sns
+import time
+from datetime import datetime
+import scipy.io as scio
+import random
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+
+import properscoring as prscore
+import pickle
+from pathlib import Path
+import os
+
+
+random.seed(888)
+np.random.seed(888)
+
+
+# number 23785
+DST_50SOC=pd.read_csv('DST4Ah50-VISOC2.csv')
+DST_50SOC=DST_50SOC[['V','I','SOC']]
+
+# number 21769
+FUDS_50SOC=pd.read_csv('FUDS4Ah50-VISOC2.csv')
+FUDS_50SOC=FUDS_50SOC[['V','I','SOC']]
+
+# number 16443
+NEDC_50SOC=pd.read_csv('NEDC4Ah50-VISOC2.csv')
+NEDC_50SOC=NEDC_50SOC[['V','I','SOC']]
+
+
+
+df_train=NEDC_50SOC
+
+Vk=df_train[['V']]
+Ik=df_train[['I']]
+SOCk=df_train[['SOC']]
+
+Vk_1=Vk.shift(1)
+Ik_1=Ik.shift(1)
+SOCk_1=SOCk.shift(1)
+
+df_train_X=pd.concat([Vk,Ik, Vk_1, Ik_1], axis=1)
+df_train_X.columns=['V','I','V_1','I_1']
+
+df_train_X = df_train_X.dropna()
+
+df_train_Y = df_train[['SOC']]
+
+
+import GPy
+
+kernel = GPy.kern.RBF(input_dim=4,ARD=True)
+m = GPy.models.GPRegression(df_train_X,df_train_Y[1:],kernel)
+
+print(m)
+
+m.optimize_restarts(num_restarts = 15)
+
+print(m)
+
+print(m.kern.variance)
+print(m.kern.lengthscale)
+
+
+#FUDS_50SOC DST_50SOC 
+df_test=FUDS_50SOC
+V_test=df_test[['V']]
+I_test=df_test[['I']]
+
+df_test_new=pd.concat([V_test,I_test, V_test.shift(1), I_test.shift(1)], axis=1)
+df_test_new = df_test_new.dropna()
+df_test_new.columns=['V','I','V_1','I_1']
+
+mean,var= m.predict(df_test_new.values)
+std=np.sqrt(var)
+
+mean=mean.ravel()
+std=std.ravel()
+
+
+lower = []
+upper = []
+for s in range(1,4):
+    lower = lower + [mean - s * std]
+    upper = upper + [mean + s * std]
+    
+MAE = mean_absolute_error(df_test['SOC'][1:], mean)
+RMSE= mean_squared_error(df_test['SOC'][1:], mean, squared=False)
+MAX=sorted(abs(df_test['SOC'][1:]-mean))[-1]
+print(MAE)
+print(RMSE)
+print(MAX)
+
+PICP = np.sum( (df_test['SOC'][1:] >= lower[1]) & (df_test['SOC'][1:]  <= upper[1])  ) / (df_test['SOC'][1:].shape[0] )
+PINAW=((upper[1] - lower[1]).mean(axis=0) )/(np.max(df_test['SOC'][1:])-np.min(df_test['SOC'][1:]))
+C = prscore.crps_gaussian(df_test['SOC'][1:], mu=mean, sig=std)
+CRPS = C.mean()
+print(PICP)
+print(PINAW)
+print(CRPS)
